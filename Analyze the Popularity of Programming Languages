@@ -1,0 +1,37 @@
+# Load necessary packages
+library(readr)
+library(dplyr)
+library(ggplot2)
+
+# Load the dataset
+data <- read_csv("stack_overflow_data.csv", show_col_types = FALSE)
+
+# Has R been growing or shrinking over time? Save your answer as a data frame, r_over_time, with five columns: year, tag, num_questions, year_total, and fraction.
+r_over_time <- data %>% mutate(fraction = num_questions / year_total * 100)
+head(r_over_time,3)
+
+# What fraction of the total number of questions asked in 2020 had the R tag? Save your answer as a numeric variable, r_percentage, in percentage format (e.g. 0.5 becomes 50).
+r_percentage <- r_over_time %>% filter(year==2020, tag=='r')
+r_percentage <- r_percentage$fraction
+r_percentage
+
+# make a graph
+ggplot(filter(r_over_time, tag == 'r')) + geom_line(aes(x = year, y = fraction)) + ggtitle("The Growth of R") + theme(plot.title = element_text(hjust=0.5))
+
+# What were the five most asked-about tags between 2015-2020? Save your answer as a character vector, highest_tags.
+highest_tags <- r_over_time %>% filter(year>=2015) %>% group_by(tag) %>% summarize(sum_tag = sum(num_questions)) %>% arrange(desc(sum_tag))
+highest_tags <- highest_tags$tag
+head(highest_tags,5)
+
+selected_tags <- head(highest_tags,5)
+highest_tags_over_time <- r_over_time %>% filter(tag %in% selected_tags)
+highest_tags_over_time
+
+# make a graph
+ggplot(highest_tags_over_time, aes(x = year, y = fraction, group = tag, color = tag)) + geom_line() + ggtitle("Tags for comparison: Android, C#, Java, JavaScript, Python") + theme(plot.title = element_text(hjust=0.5))
+
+# Which tag experienced the largest year-over-year increase in its fraction of questions? Save the tag name answer as a character vector, highest_ratio_tag.
+highest_ratio_tag <- r_over_time %>% arrange(tag, year) %>% group_by(tag) %>% mutate(ratio = fraction / lag(fraction)) %>% ungroup()
+highest_ratio_tag <- highest_ratio_tag %>% slice_max(ratio, n=1)
+highest_ratio_tag <- highest_ratio_tag$tag
+highest_ratio_tag
